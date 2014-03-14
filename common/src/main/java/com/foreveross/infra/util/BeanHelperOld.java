@@ -29,6 +29,7 @@ public class BeanHelperOld {
 	private static final String DATE_DEFAULT_PATTERN = "yyyy-MM-dd HH:mm:ss";
 	private static final String[] DATE_PARSE_PATTERNS = new String[] {
 			"yyyy-MM-dd", DATE_DEFAULT_PATTERN, "yyyy-MM-dd HH:mm" };
+	private static final Map<Class, Map<String, BeanField>> CLASS_FIELD_CACHE = new HashMap<Class, Map<String, BeanField>>();
 
 	//
 
@@ -368,115 +369,115 @@ public class BeanHelperOld {
 		}
 	}
 
-//	public static void main(String[] args) {
-//		B b = new B();
-//		C c = new C();
-//		b.print();
-//		Map map = new HashMap();
-//		{
-//			map.put("aa", "aa");
-//			map.put("b", "b");
-//			map.put("c", 11L);
-//			map.put("d", 11);
-//			map.put("e", new Date());
-//			map.put("f", "11");
-//			map.put("g", 111.1D);
-//			map.put("h", "2013-01-01");
-//			map.put("i", new Date());
-//			map.put("j", 111L);
-//			map.put("k", new java.sql.Date(new Date().getTime()));
-//		}
-//		{
-//			long start = System.currentTimeMillis();
-//			for (int i = 0; i < 10000; i++) {
-//				BeanHelper.copyProperties(c, b);
-//			}
-//			System.out.println("Object2Object:"
-//					+ (System.currentTimeMillis() - start) / 10000.0);
-//		}
-//		{
-//			long start = System.currentTimeMillis();
-//			for (int i = 0; i < 10000; i++) {
-//				BeanHelper.copyProperties(c, map);
-//			}
-//			System.out.println("Map2Object:"
-//					+ (System.currentTimeMillis() - start) / 10000.0);
-//		}
-//		{
-//			long start = System.currentTimeMillis();
-//			for (int i = 0; i < 10000; i++) {
-//				BeanHelper.copyProperties(new HashMap(), b);
-//			}
-//			System.out.println("Object2Map:"
-//					+ (System.currentTimeMillis() - start) / 10000.0);
-//		}
-//		{
-//			long start = System.currentTimeMillis();
-//			for (int i = 0; i < 10000; i++) {
-//				BeanHelper.copyProperties(new HashMap(), map);
-//			}
-//			System.out.println("Map2Map:"
-//					+ (System.currentTimeMillis() - start) / 10000.0);
-//		}
-//		System.out.println(BeanHelper.copyProperties(c, b));
-//		System.out.println(BeanHelper.copyProperties(c, map));
-//		System.out.println(BeanHelper.copyProperties(new HashMap(), b));
-//		System.out.println(BeanHelper.copyProperties(new HashMap(), map));
-//	}
-//
-//	static class A {
-//		private int a = 1;
-//
-//		void print() {
-//			System.out.println(getClass());
-//		}
-//	}
-//
-//	static class B extends A {
-//		private static String aa = "aa";
-//		//Same Type
-//		private String b = "b";
-//		private Long c = 11L;
-//		private int d = 11;
-//		private Date e = new Date();
-//		//String to Number
-//		private String f = "11";
-//		//Number to String
-//		private Double g = 111.1D;
-//		//String to Date
-//		private String h = "2013-01-01";
-//		//Date to String
-//		private Date i = new Date();
-//		//Other
-//		private Long j = 111L;
-//		private java.sql.Date k = new java.sql.Date(new Date().getTime());
-//	}
-//
-//	static class C {
-//		private static String aa = "";
-//		private int a;
-//		//Same Type
-//		private String b;
-//		private Long c;
-//		private int d;
-//		private Date e;
-//		//String to Number
-//		private long f;
-//		//Number to String
-//		private String g;
-//		//String to Date
-//		private Date h;
-//		//Date to String
-//		private String i;
-//		//Other
-//		private Integer j;
-//		private Date k;
-//
-//		@Override
-//		public String toString() {
-//			return "C [a=" + a + ", b=" + b + ", c=" + c + ", d=" + d + ", e="
-//					+ e + ", f=" + f + ", g=" + g + ", h=" + h + ", i=" + i
-//					+ ", j=" + j + ", k=" + k + ", aa=" + aa + "]";
-//		}
-//	}
+	//	public static void main(String[] args) {
+	//		B b = new B();
+	//		C c = new C();
+	//		b.print();
+	//		Map map = new HashMap();
+	//		{
+	//			map.put("aa", "aa");
+	//			map.put("b", "b");
+	//			map.put("c", 11L);
+	//			map.put("d", 11);
+	//			map.put("e", new Date());
+	//			map.put("f", "11");
+	//			map.put("g", 111.1D);
+	//			map.put("h", "2013-01-01");
+	//			map.put("i", new Date());
+	//			map.put("j", 111L);
+	//			map.put("k", new java.sql.Date(new Date().getTime()));
+	//		}
+	//		{
+	//			long start = System.currentTimeMillis();
+	//			for (int i = 0; i < 10000; i++) {
+	//				BeanHelper.copyProperties(c, b);
+	//			}
+	//			System.out.println("Object2Object:"
+	//					+ (System.currentTimeMillis() - start) / 10000.0);
+	//		}
+	//		{
+	//			long start = System.currentTimeMillis();
+	//			for (int i = 0; i < 10000; i++) {
+	//				BeanHelper.copyProperties(c, map);
+	//			}
+	//			System.out.println("Map2Object:"
+	//					+ (System.currentTimeMillis() - start) / 10000.0);
+	//		}
+	//		{
+	//			long start = System.currentTimeMillis();
+	//			for (int i = 0; i < 10000; i++) {
+	//				BeanHelper.copyProperties(new HashMap(), b);
+	//			}
+	//			System.out.println("Object2Map:"
+	//					+ (System.currentTimeMillis() - start) / 10000.0);
+	//		}
+	//		{
+	//			long start = System.currentTimeMillis();
+	//			for (int i = 0; i < 10000; i++) {
+	//				BeanHelper.copyProperties(new HashMap(), map);
+	//			}
+	//			System.out.println("Map2Map:"
+	//					+ (System.currentTimeMillis() - start) / 10000.0);
+	//		}
+	//		System.out.println(BeanHelper.copyProperties(c, b));
+	//		System.out.println(BeanHelper.copyProperties(c, map));
+	//		System.out.println(BeanHelper.copyProperties(new HashMap(), b));
+	//		System.out.println(BeanHelper.copyProperties(new HashMap(), map));
+	//	}
+	//
+	//	static class A {
+	//		private int a = 1;
+	//
+	//		void print() {
+	//			System.out.println(getClass());
+	//		}
+	//	}
+	//
+	//	static class B extends A {
+	//		private static String aa = "aa";
+	//		//Same Type
+	//		private String b = "b";
+	//		private Long c = 11L;
+	//		private int d = 11;
+	//		private Date e = new Date();
+	//		//String to Number
+	//		private String f = "11";
+	//		//Number to String
+	//		private Double g = 111.1D;
+	//		//String to Date
+	//		private String h = "2013-01-01";
+	//		//Date to String
+	//		private Date i = new Date();
+	//		//Other
+	//		private Long j = 111L;
+	//		private java.sql.Date k = new java.sql.Date(new Date().getTime());
+	//	}
+	//
+	//	static class C {
+	//		private static String aa = "";
+	//		private int a;
+	//		//Same Type
+	//		private String b;
+	//		private Long c;
+	//		private int d;
+	//		private Date e;
+	//		//String to Number
+	//		private long f;
+	//		//Number to String
+	//		private String g;
+	//		//String to Date
+	//		private Date h;
+	//		//Date to String
+	//		private String i;
+	//		//Other
+	//		private Integer j;
+	//		private Date k;
+	//
+	//		@Override
+	//		public String toString() {
+	//			return "C [a=" + a + ", b=" + b + ", c=" + c + ", d=" + d + ", e="
+	//					+ e + ", f=" + f + ", g=" + g + ", h=" + h + ", i=" + i
+	//					+ ", j=" + j + ", k=" + k + ", aa=" + aa + "]";
+	//		}
+	//	}
 }

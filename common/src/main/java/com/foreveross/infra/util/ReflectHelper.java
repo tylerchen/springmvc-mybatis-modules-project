@@ -20,10 +20,8 @@ import com.google.common.collect.Multimap;
 public class ReflectHelper {
 
 	private static boolean CACHE = false;
-	@SuppressWarnings("unused")
 	private static Multimap<Class<?>, Field> CACHE_FIELD = ArrayListMultimap
 			.create();
-	@SuppressWarnings("unused")
 	private static Multimap<Class<?>, Method> CACHE_METHOD = ArrayListMultimap
 			.create();
 
