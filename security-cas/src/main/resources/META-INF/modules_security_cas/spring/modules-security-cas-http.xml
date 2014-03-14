@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:lang="http://www.springframework.org/schema/lang" xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.2.xsd
+	http://www.springframework.org/schema/lang http://www.springframework.org/schema/lang/spring-lang-4.0.xsd
+	http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+	http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.2.xsd
+	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd">
+
+	<security:http pattern="/bootstrap/**" security="none" />
+	<security:http pattern="/js/**" security="none" />
+	<security:http pattern="/login" security="none" />
+	<security:http pattern="/logout" security="none" />
+	<security:http pattern="/*.ico" security="none" />
+	<security:http pattern="/**/*.css" security="none" />
+	<security:http pattern="/**/*.js" security="none" />
+	<security:http pattern="/**/*.jpg" security="none" />
+	<security:http pattern="/**/*.png" security="none" />
+	<security:http pattern="/**/*.gif" security="none" />
+	<security:http auto-config="false" entry-point-ref="casAuthenticationEntryPoint"
+		use-expressions="true">
+		<security:intercept-url pattern="/j_spring_security_check"
+			access="IS_AUTHENTICATED_ANONYMOUSLY" />
+		<security:intercept-url pattern="/**" access="!anonymous" />
+		<security:custom-filter position="CAS_FILTER"
+			ref="casAuthenticationFilter" />
+		<security:custom-filter before="FILTER_SECURITY_INTERCEPTOR"
+			ref="groovyCasSecurityFilter" />
+		<security:custom-filter before="LOGOUT_FILTER"
+			ref="requestSingleLogoutFilter" />
+	</security:http>
+	<!-- entry point -->
+	<bean id="casAuthenticationEntryPoint"
+		class="org.springframework.security.cas.web.CasAuthenticationEntryPoint">
+		<property name="loginUrl" value="${prop.cas.login.url}" />
+		<property name="serviceProperties" ref="serviceProperties" />
+	</bean>
+	<bean id="serviceProperties" class="org.springframework.security.cas.ServiceProperties">
+		<property name="service" value="${prop.cas.service.url}" />
+		<property name="sendRenew" value="false" />
+	</bean>
+	<!-- entry point end -->
+	<!-- cas filter -->
+	<bean id="casAuthenticationFilter"
+		class="org.springframework.security.cas.web.CasAuthenticationFilter">
+		<property name="authenticationManager" ref="authenticationManager" />
+		<property name="authenticationFailureHandler">
+			<bean
+				class="org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler">
+				<property name="defaultFailureUrl" value="/casfailed.jsp" />
+			</bean>
+		</property>
+		<property name="authenticationSuccessHandler">
+			<bean
+				class="org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler">
+				<property name="defaultTargetUrl" value="/" />
+			</bean>
+		</property>
+	</bean>
+	<security:authentication-manager alias="authenticationManager">
+		<security:authentication-provider
+			ref="groovyCasAuthenticationProvider" />
+	</security:authentication-manager>
+	<!-- cas filter end -->
+	<!-- logout filter -->
+	<bean id="requestSingleLogoutFilter"
+		class="org.springframework.security.web.authentication.logout.LogoutFilter">
+		<constructor-arg value="${prop.cas.logout.url.success}" />
+		<constructor-arg>
+			<bean
+				class="org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler" />
+		</constructor-arg>
+		<property name="filterProcessesUrl" value="/j_spring_cas_security_logout" />
+	</bean>
+	<lang:groovy id="securityAuthorizationDataApplication"
+		scope="singleton">
+		<lang:inline-script>
+		<![CDATA[
+package com.foreveross.project.module.web.security;
+import com.foreveross.common.module.security.application.*;
+
+class SecurityAuthorizationDataApplicationImpl implements SecurityAuthorizationDataApplication {
+	AuthorizationApplication authorizationApplication;
+	public void setAuthorizationApplication(AuthorizationApplication authorizationApplication) {
+		this.authorizationApplication = authorizationApplication;
+	}
+	public Map<String, Object> findAccountByUsernameInMap(String username){
+		return (Map<String, Object>)authorizationApplication.findAccountByUsernameInMap(username);
+	}
+	public List<String> findRoleNameByUsername(String username){
+		return (List<String>)authorizationApplication.findRoleNameByUsername(username);
+	}
+	public Map<String, List<String>> findAllResourceNameAndRoleNameInResourceRolesMap(){
+		return (Map<String, List<String>>)authorizationApplication.findAllResourceNameAndRoleNameInResourceRolesMap();
+	}
+}
+		]]>
+		</lang:inline-script>
+		<lang:property name="authorizationApplication" ref="authorizationApplication" />
+	</lang:groovy>
+	<bean id="securityAllInOneApplication"
+		class="com.foreveross.common.module.security.application.impl.SecurityAllInOneApplicationImpl">
+		<property name="securityAuthorizationDataApplication" ref="securityAuthorizationDataApplication" />
+	</bean>
+	<!-- logout filter end -->
+	<lang:groovy id="groovyCasSecurityFilter" scope="singleton">
+		<lang:inline-script>
+		<![CDATA[
+package com.foreveross.project.module.web.security;
+import javax.servlet.*;
+import org.springframework.security.access.*;
+import org.springframework.security.access.intercept.*;
+import org.springframework.security.authentication.*;
+import org.springframework.security.core.*;
+import org.springframework.security.core.authority.*;
+import org.springframework.security.core.userdetails.*;
+import org.springframework.security.web.*;
+import org.springframework.security.web.access.intercept.*;
+import com.foreveross.common.module.security.application.*;
+
+class GroovyCasSecurityFilter extends AbstractSecurityInterceptor implements Filter {
+	SecurityAllInOneApplication allinone;
+	public Collection<ConfigAttribute> getAllConfigAttributes(){ return allinone.getAllConfigAttributes_FilterInvocationSecurityMetadataSource(); }
+	public Collection<ConfigAttribute> getAttributes(Object object) throws IllegalArgumentException{ return allinone.getAttributes_FilterInvocationSecurityMetadataSource(object); }
+	public boolean supports(Class<?> clazz){ return allinone.supports_FilterInvocationSecurityMetadataSource(clazz); }
+	//
+	public Class<? extends Object> getSecureObjectClass(){ return FilterInvocation.class; }
+	public SecurityMetadataSource obtainSecurityMetadataSource(){ return this.securityMetadataSource; }
+	//
+	FilterInvocationSecurityMetadataSource securityMetadataSource;
+	public void setSecurityMetadataSource(FilterInvocationSecurityMetadataSource securityMetadataSource) { this.securityMetadataSource = securityMetadataSource; }
+	//
+	public void destroy(){ allinone.destroy_Filter(); }
+	public void init(FilterConfig config) throws ServletException{ allinone.init_Filter(config); }
+	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException{
+		FilterInvocation fi = new FilterInvocation(request, response, chain);
+		InterceptorStatusToken token = null;
+		try {
+			token = beforeInvocation(fi);
+			fi.getChain().doFilter(fi.getRequest(), fi.getResponse());
+		} finally {
+			afterInvocation(token, null);
+		}
+	}
+}
+		]]>
+		</lang:inline-script>
+		<lang:property name="allinone" ref="securityAllInOneApplication" />
+		<lang:property name="authenticationManager" ref="authenticationManager" />
+		<lang:property name="accessDecisionManager" ref="groovyCasAccessDecisionManager" />
+		<lang:property name="securityMetadataSource" ref="groovyCasSecurityMetadataSource" />
+	</lang:groovy>
+	<lang:groovy id="groovyCasAuthenticationProvider" scope="singleton">
+		<lang:inline-script>
+		<![CDATA[
+package com.foreveross.project.module.web.security;
+import javax.servlet.*;
+import org.jasig.cas.client.validation.*;
+import org.springframework.security.access.*;
+import org.springframework.security.access.intercept.*;
+import org.springframework.security.authentication.*;
+import org.springframework.security.cas.authentication.*;
+import org.springframework.security.core.*;
+import org.springframework.security.core.authority.*;
+import org.springframework.security.core.userdetails.*;
+import org.springframework.security.web.*;
+import org.springframework.security.web.access.intercept.*;
+import com.foreveross.common.module.security.application.*;
+
+class GroovyCasAuthenticationProvider extends CasAuthenticationProvider {
+	SecurityAllInOneApplication allinone;
+	public UserDetails loadUserByAssertion(Assertion assertion){ return allinone.loadUserByAssertion_CasAuthenticationProvider(assertion); }
+}
+		]]>
+		</lang:inline-script>
+		<lang:property name="allinone" ref="securityAllInOneApplication" />
+		<lang:property name="serviceProperties" ref="serviceProperties" />
+		<lang:property name="authenticationUserDetailsService"
+			ref="groovyCasAuthenticationUserDetailsService" />
+		<lang:property name="ticketValidator">
+			<bean class="org.jasig.cas.client.validation.Cas20ServiceTicketValidator">
+				<constructor-arg index="0"
+					value="${prop.cas.service.prefix.url}" />
+			</bean>
+		</lang:property>
+		<lang:property name="key" value="${prop.cas.ticket.key}" />
+	</lang:groovy>
+	<lang:groovy id="groovyCasAuthenticationUserDetailsService"
+		scope="singleton">
+		<lang:inline-script>
+		<![CDATA[
+package com.foreveross.project.module.web.security;
+import javax.servlet.*;
+import org.jasig.cas.client.validation.*;
+import org.springframework.security.access.*;
+import org.springframework.security.access.intercept.*;
+import org.springframework.security.authentication.*;
+import org.springframework.security.cas.authentication.*;
+import org.springframework.security.core.*;
+import org.springframework.security.core.authority.*;
+import org.springframework.security.core.userdetails.*;
+import org.springframework.security.web.*;
+import org.springframework.security.web.access.intercept.*;
+import com.foreveross.common.module.security.application.*;
+
+class GroovyCasAuthenticationUserDetailsService implements AuthenticationUserDetailsService {
+	SecurityAllInOneApplication allinone;
+	public UserDetails loadUserDetails(Authentication paramT) throws UsernameNotFoundException {
+		return allinone.loadUserDetails_UserDetailsService_AuthenticationUserDetailsService(paramT);
+	}
+}
+		]]>
+		</lang:inline-script>
+		<lang:property name="allinone" ref="securityAllInOneApplication" />
+	</lang:groovy>
+	<lang:groovy id="groovyCasAccessDecisionManager" scope="singleton">
+		<lang:inline-script>
+		<![CDATA[
+package com.foreveross.project.module.web.security;
+import javax.servlet.*;
+import org.springframework.security.access.*;
+import org.springframework.security.access.intercept.*;
+import org.springframework.security.authentication.*;
+import org.springframework.security.core.*;
+import org.springframework.security.core.authority.*;
+import org.springframework.security.core.userdetails.*;
+import org.springframework.security.web.*;
+import org.springframework.security.web.access.intercept.*;
+import com.foreveross.common.module.security.application.*;
+
+class GroovyCasAccessDecisionManager implements AccessDecisionManager{
+	SecurityAllInOneApplication allinone;
+	public void decide(Authentication authentication, Object url, Collection<ConfigAttribute> configAttributes){ allinone.decide_AccessDecisionManager(authentication,url,configAttributes); }
+	public boolean supports(ConfigAttribute configAttribute){ return allinone.supports_AccessDecisionManager(configAttribute); }
+	public boolean supports(Class<?> clazz){ return allinone.supports_AccessDecisionManager(clazz);	}
+}
+		]]>
+		</lang:inline-script>
+		<lang:property name="allinone" ref="securityAllInOneApplication" />
+	</lang:groovy>
+	<lang:groovy id="groovyCasSecurityMetadataSource" scope="singleton">
+		<lang:inline-script>
+		<![CDATA[
+package com.foreveross.project.module.web.security;
+import javax.servlet.*;
+import org.springframework.security.access.*;
+import org.springframework.security.access.intercept.*;
+import org.springframework.security.authentication.*;
+import org.springframework.security.core.*;
+import org.springframework.security.core.authority.*;
+import org.springframework.security.core.userdetails.*;
+import org.springframework.security.web.*;
+import org.springframework.security.web.access.intercept.*;
+import com.foreveross.common.module.security.application.*;
+
+class GroovyCasSecurityMetadataSource implements FilterInvocationSecurityMetadataSource{
+	SecurityAllInOneApplication allinone;
+	public Collection<ConfigAttribute> getAllConfigAttributes() { return allinone.getAllConfigAttributes_FilterInvocationSecurityMetadataSource(); }
+	public Collection<ConfigAttribute> getAttributes(Object object) throws IllegalArgumentException { return allinone.getAttributes_FilterInvocationSecurityMetadataSource(object); }
+	public boolean supports(Class<?> clazz) { return allinone.supports_FilterInvocationSecurityMetadataSource(clazz); }
+}
+		]]>
+		</lang:inline-script>
+		<lang:property name="allinone" ref="securityAllInOneApplication" />
+	</lang:groovy>
+</beans>

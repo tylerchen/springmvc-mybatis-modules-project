@@ -1,0 +1,521 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:lang="http://www.springframework.org/schema/lang" xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.2.xsd
+	http://www.springframework.org/schema/lang http://www.springframework.org/schema/lang/spring-lang-4.0.xsd
+	http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+	http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.2.xsd
+	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd">
+
+	<security:authentication-manager alias="authenticationManager">
+		<security:authentication-provider
+			ref="groovyAuthenticationProvider" />
+	</security:authentication-manager>
+
+	<lang:groovy id="securityAuthorizationDataApplication" scope="singleton">
+		<lang:inline-script>
+		<![CDATA[
+package com.foreveross.project.module.web.security;
+import com.foreveross.common.module.security.application.*;
+
+class SecurityAuthorizationDataApplicationImpl implements SecurityAuthorizationDataApplication {
+	AuthorizationApplication authorizationApplication;
+	public void setAuthorizationApplication(AuthorizationApplication authorizationApplication) {
+		this.authorizationApplication = authorizationApplication;
+	}
+	public Map<String, Object> findAccountByUsernameInMap(String username){
+		return (Map<String, Object>)authorizationApplication.findAccountByUsernameInMap(username);
+	}
+	public List<String> findRoleNameByUsername(String username){
+		return (List<String>)authorizationApplication.findRoleNameByUsername(username);
+	}
+	public Map<String, List<String>> findAllResourceNameAndRoleNameInResourceRolesMap(){
+		return (Map<String, List<String>>)authorizationApplication.findAllResourceNameAndRoleNameInResourceRolesMap();
+	}
+}
+		]]>
+		</lang:inline-script>
+		<lang:property name="authorizationApplication" ref="authorizationApplication" />
+	</lang:groovy>
+	<lang:groovy id="securityAllInOneApplication" scope="singleton">
+		<lang:inline-script>
+		<![CDATA[
+package com.foreveross.project.module.web.security;
+import java.text.*;
+import javax.servlet.*;
+import org.springframework.security.access.*;
+import org.springframework.security.access.intercept.*;
+import org.springframework.security.authentication.*;
+import org.springframework.security.core.*;
+import org.springframework.security.core.authority.*;
+import org.springframework.security.core.userdetails.*;
+import org.springframework.security.web.*;
+import org.springframework.security.web.access.intercept.*;
+import com.foreveross.common.module.security.application.*;
+
+class GroovySecurityAllInOneApplicationImpl implements SecurityAllInOneApplication {
+	SecurityAuthorizationDataApplication securityAuthorizationDataApplication;
+	Map<String, Object> resourceCache = new HashMap<String, Object>(1024);
+	Map<String, Object> userCache = new HashMap<String, Object>(1024);
+	public void setResourceCache(Map<String, Object> resourceCache) { this.resourceCache = resourceCache; }
+	public void setUserCache(Map<String, Object> userCache) { this.userCache = userCache; }
+	public void setSecurityAuthorizationDataApplication(SecurityAuthorizationDataApplication securityAuthorizationDataApplication) {
+		this.securityAuthorizationDataApplication = securityAuthorizationDataApplication;
+	}
+	public Map<String, Object> findAccountByUsernameInMap(String username){
+		return (Map<String, Object>)securityAuthorizationDataApplication.findAccountByUsernameInMap(username);
+	}
+	public List<String> findRoleNameByUsername(String username){
+		return (List<String>)securityAuthorizationDataApplication.findRoleNameByUsername(username);
+	}
+	public Map<String, List<String>> findAllResourceNameAndRoleNameInResourceRolesMap(){
+		return (Map<String, List<String>>)securityAuthorizationDataApplication.findAllResourceNameAndRoleNameInResourceRolesMap();
+	}
+	public Authentication authenticate_AuthenticationProvider(
+			Authentication authentication) throws AuthenticationException {
+		String username = authentication.getPrincipal().toString();
+		String password = authentication.getCredentials().toString();
+		Map<String, Object> userDetails = new HashMap<String, Object>();
+		//{
+			Map<String, Object> account = findAccountByUsernameInMap(username);
+			if (account == null || account.isEmpty()) {
+				throw new UsernameNotFoundException("Username not found.");
+			}
+			if (!password.equals(encode_PasswordEncoder((String) account.get("PASSWORD")))) {
+				throw new BadCredentialsException("Password is not correct.");
+			}
+			userDetails.putAll(account);
+		//}
+		//{
+			List<GrantedAuthority> gAuthoritys = new ArrayList<GrantedAuthority>();
+			for (String role : findRoleNameByUsername(username)) {
+				SimpleGrantedAuthority gai = new SimpleGrantedAuthority(role);
+				gAuthoritys.add(gai);
+			}
+			userDetails.put("grantedAuthority", gAuthoritys);
+			userCache.put(username, userDetails);
+		//}
+		//{
+			UsernamePasswordAuthenticationToken result = new UsernamePasswordAuthenticationToken(
+					userDetails, authentication.getCredentials(),
+					(List<GrantedAuthority>) userDetails
+							.get("grantedAuthority"));
+			result.setDetails(authentication.getDetails());
+			return result;
+		//}
+	}
+
+	public boolean supports_AuthenticationProvider(Class<?> paramClass) {
+		return true;
+	}
+
+	//===================================
+	public void afterPropertiesSet_InitializingBean() throws Exception {
+
+	}
+
+	//===================================
+	public String encode_PasswordEncoder(String password) {
+		return password;
+	}
+
+	//===================================org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource
+	public Collection<ConfigAttribute> getAllConfigAttributes_FilterInvocationSecurityMetadataSource() {
+		return null;
+	}
+
+	public Collection<ConfigAttribute> getAttributes_FilterInvocationSecurityMetadataSource(
+			Object object) throws IllegalArgumentException {
+		if (resourceCache.isEmpty()) {
+			Map<String, List<String>> map = findAllResourceNameAndRoleNameInResourceRolesMap();
+			resourceCache.putAll(map);
+		}
+		String url = ((FilterInvocation) object).getRequestUrl();
+		StringBuilder tempUrl = new StringBuilder(url);
+		//{
+			int position = tempUrl.indexOf("?");
+			if (position != -1) {
+				url = url.substring(0, position);
+				tempUrl.delete(position - 1, tempUrl.length());
+			}
+		//}
+		Collection<ConfigAttribute> attris = new ArrayList<ConfigAttribute>();
+		while (true) {
+			List<String> roles = (List<String>) resourceCache.get(tempUrl
+					.toString());
+			if (roles != null) {
+				for (String role : roles) {
+					attris.add(new SecurityConfig(role));
+				}
+				return attris;
+			} else {
+				if (tempUrl.charAt(tempUrl.length() - 1) == '*') {// process "/*" and "/**" situation
+					if (tempUrl.charAt(tempUrl.length() - 2) == '/') {// process "/??/*" -> "/??/**"
+						tempUrl.append('*');
+						continue;
+					} else {// process "/??/**" -> "/**"
+						int lastSpash = tempUrl.lastIndexOf("/");
+						if (lastSpash > -1
+								&& (lastSpash = tempUrl.lastIndexOf("/",
+										lastSpash - 1)) > -1) {
+							tempUrl.replace(lastSpash + 1, tempUrl.length(),
+									"**");
+							continue;
+						}
+					}
+				} else {// process "/??/url" -> "/??/*"
+					int lastSpash = tempUrl.lastIndexOf("/");
+					if (lastSpash > -1) {
+						tempUrl.replace(lastSpash + 1, tempUrl.length(), "*");
+						continue;
+					}
+				}
+			}
+			break;
+		}
+		if (attris.isEmpty()) {
+			attris.add(new SecurityConfig("ROLE_NOBODY"));
+		}
+		return attris;
+	}
+
+	public boolean supports_FilterInvocationSecurityMetadataSource(
+			Class<?> clazz) {
+		return true;
+	}
+
+	//=======================================org.springframework.security.access.intercept.AbstractSecurityInterceptor
+	//	FilterInvocationSecurityMetadataSource securityMetadataSource;
+	
+		public void setSecurityMetadataSource(
+				FilterInvocationSecurityMetadataSource securityMetadataSource) {
+			//this.securityMetadataSource = securityMetadataSource;
+		}
+	
+		public Class<? extends Object> getSecureObjectClass_AbstractSecurityInterceptor() {
+			return FilterInvocation.class;
+		}
+	
+		public SecurityMetadataSource obtainSecurityMetadataSource_AbstractSecurityInterceptor() {
+			//return this.securityMetadataSource;
+			return null;
+		}
+	
+	//=======================================javax.servlet.Filter
+	public void destroy_Filter() {
+	}
+
+	public void doFilter_Filter(ServletRequest request,
+			ServletResponse response, FilterChain chain) throws IOException,
+			ServletException {
+		FilterInvocation fi = new FilterInvocation(request, response, chain);
+		InterceptorStatusToken token = null;
+		try {
+			//token = super.beforeInvocation(fi);
+			fi.getChain().doFilter(fi.getRequest(), fi.getResponse());
+		} finally {
+			//super.afterInvocation(token, null);
+		}
+	}
+
+	public void init_Filter(FilterConfig config) throws ServletException {
+	}
+
+	//=======================================org.springframework.security.access.AccessDecisionManager
+	public void decide_AccessDecisionManager(Authentication authentication,
+			Object url, Collection<ConfigAttribute> configAttributes) {
+		if (configAttributes == null || configAttributes.isEmpty() || !(authentication.getPrincipal() instanceof Map)) {
+			return;
+		}
+
+		Map<String, Object> userDetails = (Map<String, Object>) authentication
+				.getPrincipal();
+
+		if (userDetails == null || userDetails.isEmpty()) {
+			throw new AccessDeniedException(MessageFormat.format(
+					"Denied to access [{0}][{1}]", url, userDetails
+							.get("USERNAME")));
+		}
+		if (userDetails.get("super") != null) {
+			return;
+		}
+		for (ConfigAttribute configAttribute : configAttributes) {
+			for (GrantedAuthority gAuthority : (List<GrantedAuthority>) userDetails
+					.get("grantedAuthority")) {
+				if (configAttribute.getAttribute().trim().equals(
+						gAuthority.getAuthority().trim())) {
+					return;
+				}
+			}
+		}
+		for (ConfigAttribute configAttribute : configAttributes) {
+			for (GrantedAuthority gAuthority : authentication.getAuthorities()) {
+				if (configAttribute.getAttribute().trim().equals(
+						gAuthority.getAuthority().trim())) {
+					return;
+				}
+			}
+		}
+		throw new AccessDeniedException(MessageFormat.format(
+				"Denied to access [{0}]", url));
+	}
+
+	public boolean supports_AccessDecisionManager(
+			ConfigAttribute configAttribute) {
+		return true;
+	}
+
+	public boolean supports_AccessDecisionManager(Class<?> clazz) {
+		return true;
+	}
+}
+		]]>
+		</lang:inline-script>
+		<lang:property name="securityAuthorizationDataApplication" ref="securityAuthorizationDataApplication" />
+	</lang:groovy>
+	<lang:groovy id="groovySecurityFilter" scope="singleton">
+		<lang:inline-script>
+		<![CDATA[
+package com.foreveross.project.module.web.security;
+import javax.servlet.*;
+import org.springframework.security.access.*;
+import org.springframework.security.access.intercept.*;
+import org.springframework.security.authentication.*;
+import org.springframework.security.core.*;
+import org.springframework.security.core.authority.*;
+import org.springframework.security.core.userdetails.*;
+import org.springframework.security.web.*;
+import org.springframework.security.web.access.intercept.*;
+import com.foreveross.common.module.security.application.*;
+
+class GroovySecurityFilter extends AbstractSecurityInterceptor implements Filter {
+	SecurityAllInOneApplication allinone;
+	public Collection<ConfigAttribute> getAllConfigAttributes(){
+		return allinone.getAllConfigAttributes_FilterInvocationSecurityMetadataSource();
+	}
+	public Collection<ConfigAttribute> getAttributes(Object object) throws IllegalArgumentException{
+		return allinone.getAttributes_FilterInvocationSecurityMetadataSource(object);
+	}
+	public boolean supports(Class<?> clazz){
+		return allinone.supports_FilterInvocationSecurityMetadataSource(clazz);
+	}
+	//
+	public Class<? extends Object> getSecureObjectClass(){
+		return FilterInvocation.class;
+	}
+	public SecurityMetadataSource obtainSecurityMetadataSource(){
+		return this.securityMetadataSource;
+	}
+	FilterInvocationSecurityMetadataSource securityMetadataSource;
+	def setSecurityMetadataSource(FilterInvocationSecurityMetadataSource securityMetadataSource) {
+		this.securityMetadataSource = securityMetadataSource;
+	}
+	//
+	public void destroy(){
+		allinone.destroy_Filter();
+	}
+	public void init(FilterConfig config) throws ServletException{
+		allinone.init_Filter(config);
+	}
+	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException{
+		FilterInvocation fi = new FilterInvocation(request, response, chain);
+		InterceptorStatusToken token = null;
+		try {
+			token = beforeInvocation(fi);
+			fi.getChain().doFilter(fi.getRequest(), fi.getResponse());
+		} finally {
+			afterInvocation(token, null);
+		}
+	}
+}
+		]]>
+		</lang:inline-script>
+		<lang:property name="allinone" ref="securityAllInOneApplication" />
+		<lang:property name="authenticationManager" ref="authenticationManager" />
+		<lang:property name="accessDecisionManager" ref="groovyAccessDecisionManager" />
+		<lang:property name="securityMetadataSource" ref="groovySecurityMetadataSource" />
+	</lang:groovy>
+	<lang:groovy id="groovyAuthenticationProvider" scope="singleton">
+		<lang:inline-script>
+		<![CDATA[
+package com.foreveross.project.module.web.security;
+import javax.servlet.*;
+import org.springframework.security.access.*;
+import org.springframework.security.access.intercept.*;
+import org.springframework.security.authentication.*;
+import org.springframework.security.core.*;
+import org.springframework.security.core.authority.*;
+import org.springframework.security.core.userdetails.*;
+import org.springframework.security.web.*;
+import org.springframework.security.web.access.intercept.*;
+import com.foreveross.common.module.security.application.*;
+
+class GroovyAuthenticationProvider implements AuthenticationProvider{
+	SecurityAllInOneApplication allinone;
+	public Authentication authenticate(Authentication paramAuthentication) throws AuthenticationException{
+		return allinone.authenticate_AuthenticationProvider(paramAuthentication);
+	}
+	public boolean supports(Class<?> paramClass){
+		return allinone.supports_AuthenticationProvider(paramClass);
+	}
+}
+		]]>
+		</lang:inline-script>
+		<lang:property name="allinone" ref="securityAllInOneApplication" />
+	</lang:groovy>
+	<lang:groovy id="groovyAccessDecisionManager" scope="singleton">
+		<lang:inline-script>
+		<![CDATA[
+package com.foreveross.project.module.web.security;
+import javax.servlet.*;
+import org.springframework.security.access.*;
+import org.springframework.security.access.intercept.*;
+import org.springframework.security.authentication.*;
+import org.springframework.security.core.*;
+import org.springframework.security.core.authority.*;
+import org.springframework.security.core.userdetails.*;
+import org.springframework.security.web.*;
+import org.springframework.security.web.access.intercept.*;
+import com.foreveross.common.module.security.application.*;
+
+class GroovyAccessDecisionManager implements AccessDecisionManager{
+	SecurityAllInOneApplication allinone;
+	public void decide(Authentication authentication,
+			Object url, Collection<ConfigAttribute> configAttributes){
+		allinone.decide_AccessDecisionManager(authentication,url,configAttributes);
+	}
+	public boolean supports(ConfigAttribute configAttribute){
+		return allinone.supports_AccessDecisionManager(configAttribute);
+	}
+	public boolean supports(Class<?> clazz){
+		return allinone.supports_AccessDecisionManager(clazz);
+	}
+}
+		]]>
+		</lang:inline-script>
+		<lang:property name="allinone" ref="securityAllInOneApplication" />
+	</lang:groovy>
+	<lang:groovy id="groovySecurityMetadataSource" scope="singleton">
+		<lang:inline-script>
+		<![CDATA[
+package com.foreveross.project.module.web.security;
+import javax.servlet.*;
+import org.springframework.security.access.*;
+import org.springframework.security.access.intercept.*;
+import org.springframework.security.authentication.*;
+import org.springframework.security.core.*;
+import org.springframework.security.core.authority.*;
+import org.springframework.security.core.userdetails.*;
+import org.springframework.security.web.*;
+import org.springframework.security.web.access.intercept.*;
+import com.foreveross.common.module.security.application.*;
+
+class GroovySecurityMetadataSource implements FilterInvocationSecurityMetadataSource{
+	SecurityAllInOneApplication allinone;
+	public Collection<ConfigAttribute> getAllConfigAttributes() {
+		return allinone.getAllConfigAttributes_FilterInvocationSecurityMetadataSource();;
+	}
+	public Collection<ConfigAttribute> getAttributes(Object object) throws IllegalArgumentException {
+		return allinone.getAttributes_FilterInvocationSecurityMetadataSource(object);
+	}
+	public boolean supports(Class<?> clazz) {
+		return allinone.supports_FilterInvocationSecurityMetadataSource(clazz);
+	}
+}
+		]]>
+		</lang:inline-script>
+		<lang:property name="allinone" ref="securityAllInOneApplication" />
+	</lang:groovy>
+	<lang:groovy id="userCache" scope="singleton">
+		<lang:inline-script>
+		<![CDATA[
+package com.foreveross.common.util;
+import java.util.*;
+
+class HashMapUserCache {
+	def cache = [:];
+	def get(String key) {
+		return cache[key];
+	}
+	def get(String[] keys) {
+		def result = [:];
+		if (keys == null) {
+			return result;
+		}
+		for (String key : keys) {
+			Object value = cache[key];
+			if (value != null) {
+				result.put(key, value);
+			}
+		}
+		return result;
+	}
+	def isKeyInCache(String key) {
+		return cache[key]!=null;
+	}
+	def put(String key, Object value) {
+		cache.put(key, value);
+	}
+	def put(String key, Object value, Date expiry) {
+		cache.put(key, value);
+	}
+	def put(String key, Object value, long living) {
+		cache.put(key, value);
+	}
+	def remove(String key) {
+		Object remove = key == null ? null : cache.remove(key);
+		return remove != null;
+	}
+}
+		]]>
+		</lang:inline-script>
+	</lang:groovy>
+	<lang:groovy id="resourceCache">
+		<lang:inline-script>
+		<![CDATA[
+package com.foreveross.common.util;
+import java.util.*;
+
+class HashMapResourceCache {
+	def cache = [:];
+	def get(String key) {
+		return cache[key];
+	}
+	def get(String[] keys) {
+		def result = [:];
+		if (keys == null) {
+			return result;
+		}
+		for (String key : keys) {
+			Object value = cache[key];
+			if (value != null) {
+				result.put(key, value);
+			}
+		}
+		return result;
+	}
+	def isKeyInCache(String key) {
+		return cache[key]!=null;
+	}
+	def put(String key, Object value) {
+		cache.put(key, value);
+	}
+	def put(String key, Object value, Date expiry) {
+		cache.put(key, value);
+	}
+	def put(String key, Object value, long living) {
+		cache.put(key, value);
+	}
+	def remove(String key) {
+		Object remove = key == null ? null : cache.remove(key);
+		return remove != null;
+	}
+}
+		]]>
+		</lang:inline-script>
+	</lang:groovy>
+</beans>

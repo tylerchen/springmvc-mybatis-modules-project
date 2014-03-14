@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="modules-security.AccountRole">
+
+	<resultMap id="AccountRole" type="com.foreveross.common.module.security.domain.AccountRole">
+		<id property="accountId" column="ACCOUNT_ID" jdbcType="VARCHAR" javaType="String"/>
+		<id property="roleId" column="ROLE_ID" jdbcType="VARCHAR" javaType="String"/>
+	</resultMap>
+	<sql id="AccountRole_Column">
+		AR.ROLE_ID, 
+		AR.ACCOUNT_ID
+	</sql>
+	<select id="findById" resultMap="AccountRole">
+		SELECT
+			<include refid="AccountRole_Column"/>
+		FROM 
+			SYS_ACCOUNTROLE AR
+		WHERE
+				AR.ROLE_ID    = #{roleId} 
+			AND AR.ACCOUNT_ID = #{accountId}
+	</select>
+	<insert id="save" parameterType="com.foreveross.common.module.security.domain.AccountRole">
+		INSERT INTO SYS_ACCOUNTROLE
+			(ROLE_ID, ACCOUNT_ID)
+		VALUES
+			(#{roleId}, #{accountId})
+	</insert>
+	<update id="update" parameterType="com.foreveross.common.module.security.domain.AccountRole">
+		UPDATE SYS_ACCOUNTROLE SET
+			ROLE_ID = #{roleId}, 
+			ACCOUNT_ID = #{accountId}
+		WHERE
+				ROLE_ID = #{roleId} 
+			AND ACCOUNT_ID = #{accountId}
+	</update>
+	<delete id="remove">
+		DELETE FROM 
+			SYS_ACCOUNTROLE
+		WHERE 
+				ROLE_ID = #{roleId} 
+			AND ACCOUNT_ID = #{accountId}
+	</delete>
+	<delete id="deleteAccountRoleByRoleId">
+		DELETE FROM 
+			SYS_ACCOUNTROLE
+		WHERE 
+			ROLE_ID = #{roleId} 
+	</delete>
+	<delete id="deleteAccountRoleByAccountId">
+		DELETE FROM 
+			SYS_ACCOUNTROLE
+		WHERE 
+			ACCOUNT_ID = #{accountId}
+	</delete>
+	<delete id="deleteAccountRoleByUsername">
+		DELETE FROM 
+			SYS_ACCOUNTROLE
+		WHERE 
+			ACCOUNT_ID in (SELECT max(ACC.ID) FROM SYS_ACCOUNT ACC WHERE ACC.USERNAME=#{username})
+	</delete>
+	<select id="findByAccountId" resultMap="AccountRole">
+		SELECT
+			<include refid="AccountRole_Column"/>
+		FROM 
+			SYS_ACCOUNTROLE AR
+		WHERE
+			AR.ACCOUNT_ID = #{accountId} 
+	</select>
+	<select id="findByUsername" resultMap="AccountRole">
+		SELECT
+			<include refid="AccountRole_Column"/>
+		FROM 
+			SYS_ACCOUNTROLE AR
+			INNER JOIN SYS_ACCOUNT ACC ON ACC.ID = AR.ACCOUNT_ID
+		WHERE
+			ACC.USERNAME = #{username} 
+	</select>
+	<select id="findRoleNameByUsername" resultType="String">
+		SELECT
+			ROL.NAME
+		FROM 
+			SYS_ACCOUNTROLE AR
+			INNER JOIN SYS_ACCOUNT ACC ON ACC.ID = AR.ACCOUNT_ID
+			INNER JOIN SYS_ROLE ROL ON ROL.ID = AR.ROLE_ID
+		WHERE
+			ACC.USERNAME = #{username} 
+	</select>
+</mapper>

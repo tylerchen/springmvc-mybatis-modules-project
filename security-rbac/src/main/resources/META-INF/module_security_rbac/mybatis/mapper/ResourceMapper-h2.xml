@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="modules-security.Resource">
+
+	<resultMap id="Resource" type="com.foreveross.common.module.security.domain.Resource">
+		<id property="id" column="ID" jdbcType="VARCHAR" javaType="String"/>
+		<result property="name" column="NAME" jdbcType="VARCHAR" javaType="String"/>
+		<result property="alias" column="ALIAS" jdbcType="VARCHAR" javaType="String"/>
+		<result property="enabled" column="ENABLED" jdbcType="INTEGER" javaType="Integer"/>
+		<result property="resourceType" column="RESOURCE_TYPE" jdbcType="VARCHAR" javaType="String"/>
+		<result property="category" column="CATEGORY" jdbcType="VARCHAR" javaType="String"/>
+		<result property="description" column="DESCRIPTION" jdbcType="VARCHAR" javaType="String"/>
+	</resultMap>
+	<sql id="Resource_Column">
+		RES.ID, 
+		RES.NAME, 
+		RES.ALIAS, 
+		RES.ENABLED, 
+		RES.RESOURCE_TYPE, 
+		RES.DESCRIPTION
+	</sql>
+	<select id="findById" resultMap="Resource">
+		SELECT
+			<include refid="Resource_Column"/>
+		FROM 
+			SYS_RESOURCE RES 
+		WHERE
+			RES.ID = #{id}
+	</select>
+	<insert id="save" useGeneratedKeys="true" keyProperty="id" parameterType="com.foreveross.common.module.security.domain.Resource">
+		INSERT INTO SYS_RESOURCE
+			(ID, NAME, ALIAS, ENABLED, DESCRIPTION)
+		VALUES
+			(#{id}, #{name}, #{alias}, #{enabled}, #{description})
+	</insert>
+	<update id="update" parameterType="com.foreveross.common.module.security.domain.Resource">
+		UPDATE SYS_RESOURCE SET
+			ID = #{id}, 
+			NAME = #{name}, 
+			ALIAS = #{alias}, 
+			ENABLED = #{enabled}, 
+			DESCRIPTION = #{description}
+		WHERE
+			ID = #{id}
+	</update>
+	<delete id="remove">
+		DELETE FROM 
+			SYS_RESOURCE
+		WHERE 
+			ID = #{id}
+	</delete>
+	<select id="hasResource" resultType="int">
+	<![CDATA[
+		SELECT
+			count(ID)
+		FROM 
+			SYS_RESOURCE RES 
+		WHERE
+			    RES.ID <> #{resourceId}
+			AND RES.NAME = #{resourceName}
+	]]>
+	</select>
+	<select id="findByName" resultMap="Resource">
+		SELECT
+			<include refid="Resource_Column"/>
+		FROM 
+			SYS_RESOURCE RES 
+		WHERE
+			RES.NAME = #{name}
+	</select>
+	<select id="findByUsername" resultMap="Resource">
+		SELECT DISTINCT
+			<include refid="Resource_Column"/>
+		FROM 
+			SYS_RESOURCE RES 
+		WHERE
+			RES.NAME = #{name}
+	</select>
+	<select id="findByType" resultMap="Resource">
+		SELECT DISTINCT
+			<include refid="Resource_Column"/>
+		FROM 
+			SYS_RESOURCE RES 
+		WHERE
+			RES.RESOURCE_TYPE = #{resourceType}
+	</select>
+	
+</mapper>

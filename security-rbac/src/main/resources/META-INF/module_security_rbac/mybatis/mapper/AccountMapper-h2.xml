@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="modules-security.Account">
+
+	<resultMap id="Account" type="com.foreveross.common.module.security.domain.Account">
+		<id property="id" column="ID" jdbcType="VARCHAR" javaType="String"/>
+		<result property="username" column="USERNAME" jdbcType="VARCHAR" javaType="String"/>
+		<result property="password" column="PASSWORD" jdbcType="VARCHAR" javaType="String"/>
+		<result property="realName" column="REAL_NAME" jdbcType="VARCHAR" javaType="String"/>
+		<result property="email" column="EMAIL" jdbcType="VARCHAR" javaType="String"/>
+		<result property="registryDate" column="REGISTRY_DATE" jdbcType="TIMESTAMP" javaType="java.util.Date"/>
+		<result property="enabled" column="ENABLED" jdbcType="INTEGER" javaType="Integer"/>
+		<result property="accountType" column="ACCOUNT_TYPE" jdbcType="VARCHAR" javaType="String"/>
+		<result property="category" column="CATEGORY" jdbcType="VARCHAR" javaType="String"/>
+		<result property="passwordLastUpdateDate" column="PASSWORD_LAST_UPDATE_DATE" jdbcType="TIMESTAMP" javaType="java.util.Date"/>
+		<result property="description" column="DESCRIPTION" jdbcType="VARCHAR" javaType="String"/>
+	</resultMap>
+	<sql id="Account_Column">
+		ACC.ID, 
+		ACC.USERNAME, ACC.PASSWORD, 
+		ACC.REAL_NAME, ACC.EMAIL, 
+		ACC.REGISTRY_DATE, ACC.ENABLED, 
+		ACC.ACCOUNT_TYPE, ACC.CATEGORY, 
+		ACC.PASSWORD_LAST_UPDATE_DATE, 
+		ACC.DESCRIPTION
+	</sql>
+	<select id="findById" resultMap="Account">
+		SELECT
+			<include refid="Account_Column"/>
+		FROM 
+			SYS_ACCOUNT ACC
+		WHERE
+			ACC.ID = #{id}
+	</select>
+	<insert id="save" useGeneratedKeys="true" keyProperty="id" parameterType="com.foreveross.common.module.security.domain.Account">
+		INSERT INTO SYS_ACCOUNT
+			(ID, USERNAME, PASSWORD, REAL_NAME, EMAIL, REGISTRY_DATE, ENABLED, PASSWORD_LAST_UPDATE_DATE, DESCRIPTION)
+		VALUES
+			(#{id}, #{username}, #{password}, #{realName}, #{email}, #{registryDate}, #{enabled}, #{passwordLastUpdateDate}, #{description})
+	</insert>
+	<update id="update" parameterType="com.foreveross.common.module.security.domain.Account">
+		UPDATE SYS_ACCOUNT SET
+			ID = #{id}, 
+			USERNAME = #{username}, 
+			PASSWORD = #{password}, 
+			REAL_NAME = #{realName}, 
+			EMAIL = #{email}, 
+			REGISTRY_DATE = #{registryDate}, 
+			ENABLED = #{enabled}, 
+			PASSWORD_LAST_UPDATE_DATE = #{passwordLastUpdateDate}, 
+			DESCRIPTION = #{description}
+		WHERE
+			ID = #{id}
+	</update>
+	<delete id="remove">
+		DELETE FROM 
+			SYS_ACCOUNT
+		WHERE 
+			ID = #{id}
+	</delete>
+	<select id="findByUsername" resultMap="Account">
+		SELECT
+			<include refid="Account_Column"/>
+		FROM 
+			SYS_ACCOUNT ACC
+		WHERE
+			ACC.USERNAME = #{username}
+	</select>
+	<select id="findAccountByUsernameInMap" resultType="map">
+		SELECT
+			<include refid="Account_Column"/>
+		FROM 
+			SYS_ACCOUNT ACC
+		WHERE
+			ACC.USERNAME = #{username}
+	</select>
+	<select id="findByUsernameAndPasswordAndEnabled" resultMap="Account">
+		SELECT
+			<include refid="Account_Column"/>
+		FROM 
+			SYS_ACCOUNT ACC
+		WHERE
+			    ACC.USERNAME = #{username}
+			AND ACC.PASSWORD = #{password}
+			AND ACC.ENABLED  = #{enabled}
+	</select>
+	<select id="findByType" resultMap="Account">
+		SELECT
+			<include refid="Account_Column"/>
+		FROM 
+			SYS_ACCOUNT ACC
+		WHERE
+			    ACC.ACCOUNT_TYPE = #{accountType}
+	</select>
+</mapper>

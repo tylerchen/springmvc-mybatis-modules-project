@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="modules-security.Role">
+
+	<resultMap id="Role" type="com.foreveross.common.module.security.domain.Role">
+		<id property="id" column="ID" jdbcType="VARCHAR" javaType="String"/>
+		<result property="name" column="NAME" jdbcType="VARCHAR" javaType="String"/>
+		<result property="alias" column="ALIAS" jdbcType="VARCHAR" javaType="String"/>
+		<result property="enabled" column="ENABLED" jdbcType="INTEGER" javaType="Integer"/>
+		<result property="roleType" column="ROLE_TYPE" jdbcType="VARCHAR" javaType="String"/>
+		<result property="category" column="CATEGORY" jdbcType="VARCHAR" javaType="String"/>
+		<result property="description" column="DESCRIPTION" jdbcType="VARCHAR" javaType="String"/>
+	</resultMap>
+	<sql id="Role_Column">
+		ROL.ID, 
+		ROL.NAME, 
+		ROL.ENABLED, 
+		ROL.ROLE_TYPE, 
+		ROL.DESCRIPTION
+	</sql>
+	<select id="findById" resultMap="Role">
+		SELECT
+			<include refid="Role_Column"/>
+		FROM 
+			SYS_ROLE ROL
+		WHERE
+			ROL.ID = #{id}
+	</select>
+	<insert id="save" useGeneratedKeys="true" keyProperty="id" parameterType="com.foreveross.common.module.security.domain.Role">
+		INSERT INTO SYS_ROLE
+			(ID, NAME, ENABLED, DESCRIPTION)
+		VALUES
+			(#{id}, #{name}, #{enabled}, #{description})
+	</insert>
+	<update id="update" parameterType="com.foreveross.common.module.security.domain.Role">
+		UPDATE SYS_ROLE SET
+			ID = #{id}, 
+			NAME = #{name}, 
+			ENABLED = #{enabled}, 
+			DESCRIPTION = #{description}
+		WHERE
+			ID = #{id}
+	</update>
+	<delete id="remove">
+		DELETE FROM 
+			SYS_ROLE
+		WHERE 
+			ID = #{id}
+	</delete>
+	<select id="hasRole" resultType="int">
+		SELECT
+			count(ID)
+		FROM 
+			SYS_ROLE ROL 
+		WHERE
+			<if test="id != null">
+			ROL.ID = #{id} AND
+			</if>
+			ROL.NAME = #{name}
+	</select>
+	<select id="findByName" resultMap="Role">
+		SELECT
+			<include refid="Role_Column"/>
+		FROM 
+			SYS_ROLE ROL 
+		WHERE
+			ROL.NAME = #{name}
+	</select>
+	<select id="findByType" resultMap="Role">
+		SELECT
+			<include refid="Role_Column"/>
+		FROM 
+			SYS_ROLE ROL 
+		WHERE
+			ROL.ROLE_TYPE = #{roleType}
+	</select>
+	
+</mapper>

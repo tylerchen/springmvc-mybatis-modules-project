@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="modules-security.RoleResource">
+
+	<resultMap id="RoleResource" type="com.foreveross.common.module.security.domain.RoleResource">
+		<id property="roleId" column="ROLE_ID" jdbcType="VARCHAR" javaType="String"/>
+		<id property="resourceId" column="RESOURCE_ID" jdbcType="VARCHAR" javaType="String"/>
+	</resultMap>
+	<sql id="RoleResource_Column">
+		RR.ROLE_ID, 
+		RR.RESOURCE_ID
+	</sql>
+	<select id="findById" resultMap="RoleResource">
+		SELECT
+			<include refid="RoleResource_Column"/>
+		FROM 
+			SYS_ROLERESOURCE RR
+		WHERE
+				RR.ROLE_ID = #{roleId} 
+			AND RR.RESOURCE_ID = #{resourceId}
+	</select>
+	<insert id="save" parameterType="com.foreveross.common.module.security.domain.RoleResource">
+		INSERT INTO SYS_ROLERESOURCE
+			(ROLE_ID, RESOURCE_ID)
+		VALUES
+			(#{roleId}, #{resourceId})
+	</insert>
+	<update id="update" parameterType="com.foreveross.common.module.security.domain.RoleResource">
+		UPDATE SYS_ROLERESOURCE SET
+			ROLE_ID = #{roleId}, 
+			RESOURCE_ID = #{resourceId}
+		WHERE
+				ROLE_ID = #{roleId} 
+			AND RESOURCE_ID = #{resourceId}
+	</update>
+	<delete id="remove">
+		DELETE FROM 
+			SYS_ROLERESOURCE
+		WHERE 
+				ROLE_ID = #{roleId} 
+			AND RESOURCE_ID = #{resourceId}
+	</delete>
+	<delete id="deleteRoleResourceByRoleId">
+		DELETE FROM 
+			SYS_ROLERESOURCE
+		WHERE 
+			ROLE_ID = #{roleId} 
+	</delete>
+	<delete id="deleteRoleResourceByResourceId">
+		DELETE FROM 
+			SYS_ROLERESOURCE
+		WHERE 
+			RESOURCE_ID = #{resourceId}
+	</delete>
+	<delete id="deleteRoleResourceByRoleName">
+		DELETE FROM 
+			SYS_ROLERESOURCE
+		WHERE 
+			ROLE_ID in (SELECT max(ROL.ID) FROM SYS_ROLE ROL WHERE ROL.NAME=#{roleName})
+	</delete>
+	<select id="findByRoleId" resultMap="RoleResource">
+		SELECT
+			<include refid="RoleResource_Column"/>
+		FROM 
+			SYS_ROLERESOURCE RR
+		WHERE
+			RR.ROLE_ID = #{roleId} 
+	</select>
+	<select id="findByRoleName" resultMap="RoleResource">
+		SELECT
+			<include refid="RoleResource_Column"/>
+		FROM 
+			SYS_ROLERESOURCE RR
+			INNER JOIN SYS_ROLE ROL ON ROL.ID = RR.ROLE_ID
+		WHERE
+			ROL.NAME = #{roleName} 
+	</select>
+	<select id="findAllResourceNameAndRoleNameInResourceRolesMap" resultType="map">
+		SELECT
+			ROL.NAME ROLENAME, RES.NAME RESOURCENAME
+		FROM 
+			SYS_ROLERESOURCE RR
+			INNER JOIN SYS_ROLE ROL ON ROL.ID = RR.ROLE_ID
+			INNER JOIN SYS_RESOURCE RES ON RES.ID = RR.RESOURCE_ID
+	</select>
+</mapper>

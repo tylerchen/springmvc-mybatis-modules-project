@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:lang="http://www.springframework.org/schema/lang" xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.2.xsd
+	http://www.springframework.org/schema/lang http://www.springframework.org/schema/lang/spring-lang-4.0.xsd
+	http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+	http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.2.xsd
+	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd">
+
+	<security:http pattern="/bootstrap/**" security="none" />
+	<security:http pattern="/js/**" security="none" />
+	<security:http pattern="/login" security="none" />
+	<security:http pattern="/logout" security="none" />
+	<security:http pattern="/accessdenied" security="none" />
+	<security:http pattern="/*.ico" security="none" />
+	<security:http pattern="/**/*.css" security="none" />
+	<security:http pattern="/**/*.js" security="none" />
+	<security:http pattern="/**/*.jpg" security="none" />
+	<security:http pattern="/**/*.png" security="none" />
+	<security:http pattern="/**/*.gif" security="none" />
+	<security:http auto-config="true">
+		<security:intercept-url pattern="/**"
+			access="IS_AUTHENTICATED_FULLY" />
+		<security:form-login login-page="/login"
+			default-target-url="/index" authentication-failure-url="/accessdenied" />
+		<security:logout logout-success-url="/logout" />
+		<security:custom-filter ref="groovySecurityFilter"
+			before="FILTER_SECURITY_INTERCEPTOR" />
+	</security:http>
+</beans>
