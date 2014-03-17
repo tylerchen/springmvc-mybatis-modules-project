@@ -1,4 +1,10 @@
 springmvc-mybatis-modules-project
 =================================
 
-A modular project using servlet3.0, springmvc and mybatis
+A modular project using servlet3.0, springmvc and mybatis.
+
+### Module Constraints
+
+1. "common" module is the public module, other module could dependency this module.
+
+2. There is no dependency between modules besides "common" module.
