@@ -11,8 +11,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.Map;
 
-import com.dayatang.domain.InstanceFactory;
-import com.dayatang.querychannel.service.RepositoryService;
+import com.foreveross.infra.dsl.engine.DSL;
 import com.foreveross.infra.util.MapHelper;
 
 /**
@@ -145,46 +144,44 @@ public class Account implements com.dayatang.domain.Entity, Serializable {
 		this.description = description;
 	}
 
-	//
-
-	private static RepositoryService getRepository() {
-		return InstanceFactory.getInstance(RepositoryService.class);
-	}
-
 	public static Account get(String id) {
-		return getRepository()
-				.queryOne("modules-security.Account.findById", id);
+		return DSL.dsl("bean:v1:repositoryService?queryOne", new Object[] {
+				"modules-security.Account.findById", id });
 	}
 
-	public void save() {
+	public Account save() {
 		if (getId() != null) {
-			getRepository().update("modules-security.Account.update", this);
+			DSL.dsl("bean:v1:repositoryService?update", new Object[] {
+					"modules-security.Account.update", this });
 		} else {
-			getRepository().save("modules-security.Account.save", this);
+			DSL.dsl("bean:v1:repositoryService?save", new Object[] {
+					"modules-security.Account.save", this });
 		}
+		return this;
 	}
 
 	public void remove() {
-		getRepository().remove("modules-security.Account.remove", this);
+		DSL.dsl("bean:v1:repositoryService?remove", new Object[] {
+				"modules-security.Account.remove", this });
 	}
 
 	public static Account getByUsername(String username) {
-		return getRepository().queryOne(
-				"modules-security.Account.findByUsername", username);
+		return DSL.dsl("bean:v1:repositoryService?queryOne", new Object[] {
+				"modules-security.Account.findByUsername", username });
 	}
 
 	public static Map<String, Object> findAccountByUsernameInMap(String username) {
-		return getRepository()
-				.queryOne(
+		return DSL.dsl("bean:v1:repositoryService?queryOne",
+				new Object[] {
 						"modules-security.Account.findAccountByUsernameInMap",
-						username);
+						username });
 	}
 
 	public static Account login(String username, String password, String encrypt) {
-		return getRepository().queryOne(
+		return DSL.dsl("bean:v1:repositoryService?queryOne", new Object[] {
 				"modules-security.Account.findByUsernameAndPasswordAndEnabled",
 				MapHelper.toMap("username", username, "password", password,
-						"enabled", 1));
+						"enabled", 1) });
 	}
 
 	@Override

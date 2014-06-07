@@ -12,7 +12,7 @@
 
 	<!-- load properties for product environment -->
 	<context:property-placeholder location="classpath*:META-INF/props/*.properties"
-		ignore-unresolvable="true" ignore-resource-not-found="true" order="99999" />
+		ignore-unresolvable="true" ignore-resource-not-found="true" order="999" />
 	<!-- load properties for test environment -->
 	<context:property-placeholder
 		location="classpath*:META-INF/test_props/*.properties"
@@ -25,4 +25,8 @@
 			expression="org.springframework.stereotype.Controller" />
 	</context:component-scan>
 
+	<bean class="org.springframework.scripting.support.ScriptFactoryPostProcessor"/>
+	<bean class="com.foreveross.infra.util.groovy.GroovyFactory">
+		<property name="directory" value="${prop.groovy.dir}" />
+	</bean>
 </beans>

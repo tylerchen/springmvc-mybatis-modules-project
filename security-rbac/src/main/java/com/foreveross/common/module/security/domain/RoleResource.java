@@ -13,8 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.dayatang.domain.InstanceFactory;
-import com.dayatang.querychannel.service.RepositoryService;
+import com.foreveross.infra.dsl.engine.DSL;
 import com.foreveross.infra.util.Assert;
 import com.foreveross.infra.util.MapHelper;
 
@@ -47,21 +46,19 @@ public class RoleResource implements com.dayatang.domain.Entity, Serializable {
 		this.resourceId = resourceId;
 	}
 
-	private static RepositoryService getRepository() {
-		return InstanceFactory.getInstance(RepositoryService.class);
-	}
-
 	public static RoleResource get(String roleId, String resourceId) {
-		return getRepository().queryOne(
+		return DSL.dsl("bean:v1:repositoryService?queryOne", new Object[] {
 				"modules-security.RoleResource.findById",
-				MapHelper.toMap("roleId", roleId, "resourceId", resourceId));
+				MapHelper.toMap("roleId", roleId, "resourceId", resourceId) });
 	}
 
-	public void save() {
+	public RoleResource save() {
 		Assert.isTrue(!containsRoleResource(getRoleId(), getResourceId()),
 				String.format("RoleId:%s, ResourceId:%s is exists!",
 						getRoleId(), getResourceId()));
-		getRepository().save("modules-security.RoleResource.save", this);
+		DSL.dsl("bean:v1:repositoryService?save", new Object[] {
+				"modules-security.RoleResource.save", this });
+		return this;
 	}
 
 	public static boolean containsRoleResource(String roleId, String resourceId) {
@@ -72,35 +69,37 @@ public class RoleResource implements com.dayatang.domain.Entity, Serializable {
 
 	public static void deleteRoleResourceByRoleId(String roleId) {
 		Assert.notEmpty(roleId, "Parameter roleId is required!");
-		getRepository().remove(
+		DSL.dsl("bean:v1:repositoryService?remove", new Object[] {
 				"modules-security.RoleResource.deleteRoleResourceByRoleId",
-				roleId);
+				roleId });
 	}
 
 	public static void deleteRoleResourceByResourceId(String resourceId) {
 		Assert.notEmpty(resourceId, "Parameter resourceId is required!");
-		getRepository().remove(
+		DSL.dsl("bean:v1:repositoryService?remove", new Object[] {
 				"modules-security.RoleResource.deleteRoleResourceByResourceId",
-				resourceId);
+				resourceId });
 	}
 
 	public static void deleteRoleResourceByRoleName(String roleName) {
 		Assert.notEmpty(roleName, "Parameter roleName is required!");
-		getRepository().remove(
+		DSL.dsl("bean:v1:repositoryService?remove", new Object[] {
 				"modules-security.RoleResource.deleteRoleResourceByRoleName",
-				roleName);
+				roleName });
 	}
 
 	public static List<RoleResource> findByRoleName(String roleName) {
-		return getRepository().queryList(
-				"modules-security.RoleResource.findByRoleName", roleName);
+		return DSL.dsl("bean:v1:repositoryService?queryList", new Object[] {
+				"modules-security.RoleResource.findByRoleName", roleName });
 	}
 
 	public static Map<String, List<String>> findAllResourceNameAndRoleNameInResourceRolesMap() {
-		List<Map<String, Object>> list = getRepository()
-				.queryList(
-						"modules-security.RoleResource.findAllResourceNameAndRoleNameInResourceRolesMap",
-						null);
+		List<Map<String, Object>> list = DSL
+				.dsl(
+						"bean:v1:repositoryService?queryList",
+						new Object[] {
+								"modules-security.RoleResource.findAllResourceNameAndRoleNameInResourceRolesMap",
+								null });
 		Map<String, List<String>> map = new HashMap<String, List<String>>();
 		for (Map<String, Object> m : list) {
 			String roleName = (String) m.get("ROLENAME");

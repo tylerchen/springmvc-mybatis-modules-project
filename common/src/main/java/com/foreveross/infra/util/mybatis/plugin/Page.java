@@ -8,7 +8,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import com.foreveross.infra.util.BeanHelper;
 
-@SuppressWarnings( { "serial", "unchecked" })
 @XmlRootElement(name = "Page")
 public class Page extends org.apache.ibatis.session.RowBounds implements
 		Serializable, Cloneable {

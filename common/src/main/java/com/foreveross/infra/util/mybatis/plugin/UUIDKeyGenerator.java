@@ -1,6 +1,7 @@
 package com.foreveross.infra.util.mybatis.plugin;
 
 import java.sql.Statement;
+import java.util.Map;
 import java.util.UUID;
 
 import org.apache.ibatis.executor.Executor;
@@ -31,7 +32,10 @@ public class UUIDKeyGenerator implements KeyGenerator {
 				Configuration configuration = ms.getConfiguration();
 				MetaObject metaParam = configuration.newMetaObject(parameter);
 				String keyProperty = ms.getKeyProperties()[0];
-				if (metaParam.getGetterType(keyProperty) == String.class
+				if (parameter instanceof Map) {
+					Map m = (Map) parameter;
+					m.put(keyProperty, UUID.randomUUID().toString());
+				} else if (metaParam.getGetterType(keyProperty) == String.class
 						&& metaParam.hasGetter(keyProperty)
 						&& metaParam.hasSetter(keyProperty)
 						&& metaParam.getValue(keyProperty) == null) {

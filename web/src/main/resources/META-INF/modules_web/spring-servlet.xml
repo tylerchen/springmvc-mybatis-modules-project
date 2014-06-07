@@ -103,6 +103,7 @@ class SimpleControler {
 	@RequestMapping(value = "/", method = RequestMethod.GET)
 	String defaultPage(ModelMap map) {
 		println "Hello World";
+		com.foreveross.infra.dsl.engine.DSL.dsl("bean:v1:Hello?hello", new Object[0]);
 		return "index";
 	}
 	

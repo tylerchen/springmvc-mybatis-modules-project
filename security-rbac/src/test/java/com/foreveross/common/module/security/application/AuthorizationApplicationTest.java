@@ -13,8 +13,9 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.dayatang.domain.InstanceFactory;
+import com.foreveross.infra.dsl.engine.DSL;
 import com.foreveross.infra.test.AbstractIntegratedTestCase;
+import com.foreveross.infra.util.Logger;
 
 /**
  * @author <a href="mailto:iffiff1@hotmail.com">Tyler Chen</a> 
@@ -27,61 +28,88 @@ public class AuthorizationApplicationTest extends AbstractIntegratedTestCase {
 		return new String[] { "dataset/Demo.xml" };
 	}
 
-	private AuthorizationApplication as = null;
-
-	protected void action4SetUp() {
-		if (as == null) {
-			as = InstanceFactory.getInstance(AuthorizationApplication.class);
-		}
+	@Test
+	public void test_loggerLevel() {
+		Logger.info("Disable debug=========================");
+		Logger.changeLevel(Logger.getName(), "INFO");
+		Logger.debug("============you can't see this debug message=============");
+		Logger.info("Enable debug=========================");
+		Logger.changeLevel(Logger.getName(), "DEBUG");
+		Logger.debug("============you can see this debug message=============");
 	}
 
 	@Test
 	public void test_addAccountRoles() {
-		Assert.assertEquals(as.findUserRoles("test1").size(), 1);
-		as.addAccountRoles("test1", new String[] { "test2", "test3" });
-		Assert.assertEquals(as.findUserRoles("test1").size(), 3);
+
+		Assert.assertEquals(((List<?>) DSL.dsl(
+				"bean:v1:authorizationApplication?findUserRoles",
+				new Object[] { "test1" })).size(), 1);
+		DSL.dsl("bean:v1:authorizationApplication?addAccountRoles",
+				new Object[] { "test1", new String[] { "test2", "test3" } });
+		Assert.assertEquals(((List<?>) DSL.dsl(
+				"bean:v1:authorizationApplication?findUserRoles",
+				new Object[] { "test1" })).size(), 3);
 	}
 
 	@Test
 	public void test_addRoleResources() {
-		Assert.assertEquals(as.findRoleResources("test1").size(), 1);
-		as.addRoleResources("test1", new String[] { "test2", "test3" });
-		Assert.assertEquals(as.findRoleResources("test1").size(), 3);
+		Assert.assertEquals(((List<?>) DSL.dsl(
+				"bean:v1:authorizationApplication?findRoleResources",
+				new Object[] { "test1" })).size(), 1);
+		DSL.dsl("bean:v1:authorizationApplication?addRoleResources",
+				new Object[] { "test1", new String[] { "test2", "test3" } });
+		Assert.assertEquals(((List<?>) DSL.dsl(
+				"bean:v1:authorizationApplication?findRoleResources",
+				new Object[] { "test1" })).size(), 3);
 	}
 
 	@Test
 	public void test_findUserResources() {
-		Assert.assertEquals(as.findUserResources("test1").size(), 1);
+		Assert.assertEquals(((List<?>) DSL.dsl(
+				"bean:v1:authorizationApplication?findUserResources",
+				new Object[] { "test1" })).size(), 1);
 	}
 
 	@Test
 	public void test_login() {
-		Assert.assertNotNull(as.login("test1", "1", null));
-		Assert.assertNull(as.login("test1", "2", null));
+		Assert.assertNotNull(DSL.dsl("bean:v1:authorizationApplication?login",
+				new Object[] { "test1", "1", null }));
+		Assert.assertNull(DSL.dsl("bean:v1:authorizationApplication?login",
+				new Object[] { "test1", "2", null }));
 	}
 
 	@Test
 	public void test_updateAccountRoles() {
-		as.updateAccountRoles("test1", new String[] { "test2", "test3" });
-		Assert.assertEquals(as.findUserRoles("test1").size(), 2);
+		DSL.dsl("bean:v1:authorizationApplication?updateAccountRoles",
+				new Object[] { "test1", new String[] { "test2", "test3" } });
+		Assert.assertEquals(((List<?>) DSL.dsl(
+				"bean:v1:authorizationApplication?findUserRoles",
+				new Object[] { "test1" })).size(), 2);
 	}
 
 	@Test
 	public void test_updateRoleResources() {
-		as.updateRoleResources("test1", new String[] { "test2", "test3" });
-		Assert.assertEquals(as.findRoleResources("test1").size(), 2);
+		DSL.dsl("bean:v1:authorizationApplication?updateRoleResources",
+				new Object[] { "test1", new String[] { "test2", "test3" } });
+		Assert.assertEquals(((List<?>) DSL.dsl(
+				"bean:v1:authorizationApplication?findRoleResources",
+				new Object[] { "test1" })).size(), 2);
 	}
 
 	@Test
 	public void test_findAllRoleNameAndResourceNameInMap() {
-		Map<String, List<String>> map = as
-				.findAllResourceNameAndRoleNameInResourceRolesMap();
+		Map<String, List<String>> map = DSL
+				.dsl(
+						"bean:v1:authorizationApplication?findAllResourceNameAndRoleNameInResourceRolesMap",
+						new Object[] {});
 		System.out.println(map);
 	}
 
 	@Test
 	public void test_findRoleNameByUsername() {
-		List<String> list = as.findRoleNameByUsername("test1");
+		List<String> list = DSL.dsl(
+				"bean:v1:authorizationApplication?findRoleNameByUsername",
+				new Object[] { "test1" });
 		System.out.println(list);
 	}
 }

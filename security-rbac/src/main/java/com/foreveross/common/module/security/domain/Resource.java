@@ -10,8 +10,7 @@ package com.foreveross.common.module.security.domain;
 import java.io.Serializable;
 import java.util.List;
 
-import com.dayatang.domain.InstanceFactory;
-import com.dayatang.querychannel.service.RepositoryService;
+import com.foreveross.infra.dsl.engine.DSL;
 import com.foreveross.infra.util.Assert;
 import com.foreveross.infra.util.MapHelper;
 
@@ -100,50 +99,51 @@ public class Resource implements com.dayatang.domain.Entity, Serializable {
 		this.description = description;
 	}
 
-	private static RepositoryService getRepository() {
-		return InstanceFactory.getInstance(RepositoryService.class);
-	}
-
 	public static Resource get(String id) {
-		return getRepository().queryOne("modules-security.Resource.findById",
-				id);
+		return DSL.dsl("bean:v1:repositoryService?queryOne", new Object[] {
+				"modules-security.Resource.findById", id });
 	}
 
-	public void save() {
+	public Resource save() {
 		if (containsResource(getId(), getName())) {
 			throw new RuntimeException(String.format("Role name %s is exists!",
 					getName()));
 		}
 		if (getId() != null) {
-			getRepository().update("modules-security.Resource.update", this);
+			DSL.dsl("bean:v1:repositoryService?update", new Object[] {
+					"modules-security.Resource.update", this });
 		} else {
-			getRepository().save("modules-security.Resource.save", this);
+			DSL.dsl("bean:v1:repositoryService?save", new Object[] {
+					"modules-security.Resource.save", this });
 		}
+		return this;
 	}
 
 	public void remove() {
 		RoleResource.deleteRoleResourceByResourceId(getId());
-		getRepository().remove("modules-security.Resource.remove", getId());
+		DSL.dsl("bean:v1:repositoryService?remove", new Object[] {
+				"modules-security.Resource.remove", getId() });
 	}
 
 	public static boolean containsResource(String resourceId,
 			String resourceName) {
 		Assert.isEmpty(resourceName, "Parameter resourceName is required!");
-		Number count = getRepository().queryOne(
-				"modules-security.Resource.hasResource",
-				MapHelper.toMap("resourceId", resourceId, "resourceName",
-						resourceName));
+		Number count = DSL.dsl("bean:v1:repositoryService?queryOne",
+				new Object[] {
+						"modules-security.Resource.hasResource",
+						MapHelper.toMap("resourceId", resourceId,
+								"resourceName", resourceName) });
 		return count.longValue() > 0;
 	}
 
 	public static Resource getByName(String resourceName) {
-		return getRepository().queryOne("modules-security.Resource.findByName",
-				resourceName);
+		return DSL.dsl("bean:v1:repositoryService?queryOne", new Object[] {
+				"modules-security.Resource.findByName", resourceName });
 	}
 
 	public static List<Resource> findByUsername(String username) {
-		return getRepository().queryList(
-				"modules-security.Resource.findByUsername", username);
+		return DSL.dsl("bean:v1:repositoryService?queryList", new Object[] {
+				"modules-security.Resource.findByUsername", username });
 	}
 
 	@Override

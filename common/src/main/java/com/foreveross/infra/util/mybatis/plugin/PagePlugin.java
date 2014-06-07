@@ -11,7 +11,6 @@ import java.util.Map.Entry;
 import javax.xml.bind.PropertyException;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.ibatis.executor.parameter.DefaultParameterHandler;
 import org.apache.ibatis.executor.statement.BaseStatementHandler;
 import org.apache.ibatis.executor.statement.RoutingStatementHandler;
 import org.apache.ibatis.executor.statement.StatementHandler;
@@ -22,6 +21,7 @@ import org.apache.ibatis.plugin.Intercepts;
 import org.apache.ibatis.plugin.Invocation;
 import org.apache.ibatis.plugin.Plugin;
 import org.apache.ibatis.plugin.Signature;
+import org.apache.ibatis.scripting.defaults.DefaultParameterHandler;
 
 import com.foreveross.infra.util.jdbc.dialet.Dialect;
 

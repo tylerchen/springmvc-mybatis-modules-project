@@ -9,8 +9,7 @@ package com.foreveross.common.module.security.domain;
 
 import java.io.Serializable;
 
-import com.dayatang.domain.InstanceFactory;
-import com.dayatang.querychannel.service.RepositoryService;
+import com.foreveross.infra.dsl.engine.DSL;
 import com.foreveross.infra.util.Assert;
 import com.foreveross.infra.util.MapHelper;
 
@@ -100,44 +99,44 @@ public class Role implements com.dayatang.domain.Entity, Serializable {
 		this.description = description;
 	}
 
-	private static RepositoryService getRepository() {
-		return InstanceFactory.getInstance(RepositoryService.class);
-	}
-
-	public void save() {
+	public Role save() {
 		if (containsRole(getId(), getName())) {
 			throw new RuntimeException(String.format("Role name %s is exists!",
 					getName()));
 		}
 		if (getId() != null) {
-			getRepository().update("modules-security.Role.update", this);
+			DSL.dsl("bean:v1:repositoryService?update", new Object[] {
+					"modules-security.Role.update", this });
 		} else {
-			getRepository().save("modules-security.Role.save", this);
+			DSL.dsl("bean:v1:repositoryService?save", new Object[] {
+					"modules-security.Role.save", this });
 		}
+		return this;
 	}
 
 	public void remove() {
 		AccountRole.deleteAccountRoleByRoleId(getId());
 		RoleResource.deleteRoleResourceByRoleId(getId());
-		getRepository().remove("modules-security.Role.remove", getId());
+		DSL.dsl("bean:v1:repositoryService?remove", new Object[] {
+				"modules-security.Role.remove", getId() });
 	}
 
 	public static boolean containsRole(String roleId, String roleName) {
 		Assert.notEmpty(roleName, "Parameter roleName is required!");
-		Number count = getRepository().queryOne(
-				"modules-security.Role.hasRole",
-				MapHelper.toMap("id", roleId, "name", roleName));
+		Number count = DSL.dsl("bean:v1:repositoryService?queryOne",
+				new Object[] { "modules-security.Role.hasRole",
+						MapHelper.toMap("id", roleId, "name", roleName) });
 		return count.longValue() > 0;
 	}
 
 	public static Role get(String roleId) {
-		return getRepository().queryOne("modules-security.Role.findById",
-				roleId);
+		return DSL.dsl("bean:v1:repositoryService?queryOne", new Object[] {
+				"modules-security.Role.findById", roleId });
 	}
 
 	public static Role getByName(String roleName) {
-		return getRepository().queryOne("modules-security.Role.findByName",
-				roleName);
+		return DSL.dsl("bean:v1:repositoryService?queryOne", new Object[] {
+				"modules-security.Role.findByName", roleName });
 	}
 
 	@Override

@@ -29,6 +29,10 @@
 	<logger name="com.foreveross">
 		<level value="DEBUG" />
 	</logger>
+	
+	<logger name="FOSS">
+		<level value="debug" />
+	</logger>
 
 	<root>
 		<level value="INFO" />

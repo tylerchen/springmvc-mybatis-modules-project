@@ -10,8 +10,7 @@ package com.foreveross.common.module.security.domain;
 import java.io.Serializable;
 import java.util.List;
 
-import com.dayatang.domain.InstanceFactory;
-import com.dayatang.querychannel.service.RepositoryService;
+import com.foreveross.infra.dsl.engine.DSL;
 import com.foreveross.infra.util.Assert;
 import com.foreveross.infra.util.MapHelper;
 
@@ -44,24 +43,21 @@ public class AccountRole implements com.dayatang.domain.Entity, Serializable {
 		this.roleId = roleId;
 	}
 
-	private static RepositoryService getRepository() {
-		return InstanceFactory.getInstance(RepositoryService.class);
-	}
-
 	public static AccountRole get(String accountId, String roleId) {
-		return getRepository().queryOne(
+		return DSL.dsl("bean:v1:repositoryService?queryOne", new Object[] {
 				"modules-security.AccountRole.findById",
-				MapHelper.toMap("accountId", accountId, "roleId", roleId));
+				MapHelper.toMap("accountId", accountId, "roleId", roleId) });
 	}
 
-	public void save() {
+	public AccountRole save() {
 		Assert.isTrue(!containsAccountRole(getAccountId(), getRoleId()), String
 				.format("AccountId:%s, RoleId:%s is exists!", getAccountId(),
 						getRoleId()));
-		getRepository().save(
+		DSL.dsl("bean:v1:repositoryService?save", new Object[] {
 				"modules-security.AccountRole.save",
 				MapHelper.toMap("accountId", getAccountId(), "roleId",
-						getRoleId()));
+						getRoleId()) });
+		return this;
 	}
 
 	public static boolean containsAccountRole(String accountId, String roleId) {
@@ -72,40 +68,40 @@ public class AccountRole implements com.dayatang.domain.Entity, Serializable {
 
 	public static void deleteAccountRoleByRoleId(String roleId) {
 		Assert.notEmpty(roleId, "Parameter roleId is required!");
-		getRepository().remove(
+		DSL.dsl("bean:v1:repositoryService?remove", new Object[] {
 				"modules-security.AccountRole.deleteAccountRoleByRoleId",
-				roleId);
+				roleId });
 	}
 
 	public static void deleteAccountRoleByAccountId(String accountId) {
 		Assert.notEmpty(accountId, "Parameter accountId is required!");
-		getRepository().remove(
+		DSL.dsl("bean:v1:repositoryService?remove", new Object[] {
 				"modules-security.AccountRole.deleteAccountRoleByAccountId",
-				accountId);
+				accountId });
 	}
 
 	public static void deleteAccountRoleByUsername(String username) {
 		Assert.notEmpty(username, "Parameter username is required!");
-		getRepository().remove(
+		DSL.dsl("bean:v1:repositoryService?remove", new Object[] {
 				"modules-security.AccountRole.deleteAccountRoleByUsername",
-				username);
+				username });
 	}
 
 	public static List<AccountRole> findByAccountId(String accountId) {
-		return getRepository().queryList(
-				"modules-security.AccountRole.findByAccountId", accountId);
+		return DSL.dsl("bean:v1:repositoryService?queryList", new Object[] {
+				"modules-security.AccountRole.findByAccountId", accountId });
 	}
 
 	public static List<AccountRole> findByUsername(String username) {
-		return getRepository().queryList(
-				"modules-security.AccountRole.findByUsername", username);
+		return DSL.dsl("bean:v1:repositoryService?queryList", new Object[] {
+				"modules-security.AccountRole.findByUsername", username });
 	}
 
 	public static List<String> findRoleNameByUsername(String username) {
-		return getRepository()
-				.queryList(
+		return DSL.dsl("bean:v1:repositoryService?queryList",
+				new Object[] {
 						"modules-security.AccountRole.findRoleNameByUsername",
-						username);
+						username });
 	}
 
 	@Override

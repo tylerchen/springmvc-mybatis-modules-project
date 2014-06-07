@@ -7,6 +7,8 @@
  ******************************************************************************/
 package com.foreveross.infra.util;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -45,7 +47,7 @@ public class Logger {
 		}
 	}
 
-	public CharSequence getName() {
+	public static String getName() {
 		return "FOSS";
 	}
 
@@ -82,6 +84,17 @@ public class Logger {
 	public static void warn(CharSequence message, Throwable t) {
 		if (log.isWarnEnabled()) {
 			log.warn(message.toString(), t);
+		}
+	}
+
+	public static void changeLevel(String loggerName, String level) {
+		if (loggerName == null || loggerName.length() < 1) {
+			Level lv = Level.toLevel(level);
+			LogManager.getRootLogger().setLevel(lv);
+		} else {
+			Level lv = Level.toLevel(level);
+			org.apache.log4j.Logger logger = LogManager.getLogger(loggerName);
+			logger.setLevel(lv);
 		}
 	}
 }

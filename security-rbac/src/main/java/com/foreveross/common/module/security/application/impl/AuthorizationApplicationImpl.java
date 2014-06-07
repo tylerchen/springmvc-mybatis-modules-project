@@ -11,16 +11,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.dayatang.querychannel.service.QueryService;
 import com.foreveross.common.module.security.application.AuthorizationApplication;
-import com.foreveross.common.module.security.domain.*;
-import com.foreveross.common.module.security.vo.*;
+import com.foreveross.common.module.security.domain.Account;
+import com.foreveross.common.module.security.domain.AccountRole;
+import com.foreveross.common.module.security.domain.Resource;
+import com.foreveross.common.module.security.domain.Role;
+import com.foreveross.common.module.security.domain.RoleResource;
+import com.foreveross.common.module.security.vo.AccountRoleVO;
+import com.foreveross.common.module.security.vo.AccountVO;
+import com.foreveross.common.module.security.vo.ResourceVO;
+import com.foreveross.common.module.security.vo.RoleResourceVO;
 import com.foreveross.infra.util.Assert;
 import com.foreveross.infra.util.BeanHelper;
 
@@ -30,9 +35,6 @@ import com.foreveross.infra.util.BeanHelper;
  */
 @Named("authorizationApplication")
 public class AuthorizationApplicationImpl implements AuthorizationApplication {
-
-	@Inject
-	QueryService queryService;
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public boolean containsRole(String roleId, String roleName) {
